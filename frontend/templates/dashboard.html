@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOAR Platform - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .metric-card {
+            transition: transform 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        .severity-critical {
+            color: #dc3545;
+        }
+        .severity-high {
+            color: #fd7e14;
+        }
+        .severity-medium {
+            color: #ffc107;
+        }
+        .severity-low {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> SOAR Platform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/incidents">Incidents</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/playbooks">Playbooks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/executions">Executions</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/v1/auth/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-line"></i> Security Operations Dashboard
+        </h1>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card metric-card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Incidents</h6>
+                        <h2 class="card-text" id="total-incidents">0</h2>
+                        <small>Last 30 days</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Automation Rate</h6>
+                        <h2 class="card-text" id="automation-rate">0%</h2>
+                        <small>Target: 85%</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">MTTR</h6>
+                        <h2 class="card-text" id="mttr">0m</h2>
+                        <small>Mean Time to Response</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card bg-warning text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Cost Savings</h6>
+                        <h2 class="card-text" id="cost-savings">$0</h2>
+                        <small>This month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts and Details -->
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Incidents by Severity</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Incidents by Type</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="typeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Incident Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-robot"></i> Top Playbooks</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm" id="playbook-table">
+                            <thead>
+                                <tr>
+                                    <th>Playbook</th>
+                                    <th>Executions</th>
+                                    <th>Success Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="3" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history"></i> Recent Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recent-activity" style="max-height: 300px; overflow-y: auto;">
+                            <p class="text-center">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Fetch and display dashboard data
+        async function loadDashboard() {
+            try {
+                // Load overview metrics
+                const overview = await fetch('/api/v1/dashboard/overview').then(r => r.json());
+
+                document.getElementById('total-incidents').textContent = overview.incidents.total;
+                document.getElementById('automation-rate').textContent =
+                    overview.performance.automation_rate.toFixed(1) + '%';
+                document.getElementById('mttr').textContent =
+                    (overview.performance.avg_response_time_minutes || 0).toFixed(1) + 'm';
+                document.getElementById('cost-savings').textContent =
+                    '$' + overview.roi.cost_savings_usd.toFixed(0);
+
+                // Load severity chart
+                const severityData = await fetch('/api/v1/dashboard/incidents/by-severity').then(r => r.json());
+                createSeverityChart(severityData.data);
+
+                // Load type chart
+                const typeData = await fetch('/api/v1/dashboard/incidents/by-type').then(r => r.json());
+                createTypeChart(typeData.data);
+
+                // Load trend chart
+                const trendData = await fetch('/api/v1/dashboard/incidents/trend').then(r => r.json());
+                createTrendChart(trendData.trend);
+
+                // Load playbook stats
+                const playbookStats = await fetch('/api/v1/playbooks/stats').then(r => r.json());
+                displayPlaybookStats(playbookStats);
+
+                // Load recent activity
+                const activity = await fetch('/api/v1/dashboard/activity/recent').then(r => r.json());
+                displayRecentActivity(activity.activities);
+
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        function createSeverityChart(data) {
+            const ctx = document.getElementById('severityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.map(d => d.severity.toUpperCase()),
+                    datasets: [{
+                        data: data.map(d => d.count),
+                        backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+                    }]
+                }
+            });
+        }
+
+        function createTypeChart(data) {
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.type),
+                    datasets: [{
+                        label: 'Incidents',
+                        data: data.map(d => d.count),
+                        backgroundColor: '#0d6efd'
+                    }]
+                }
+            });
+        }
+
+        function createTrendChart(data) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        label: 'Incidents',
+                        data: data.map(d => d.count),
+                        borderColor: '#0d6efd',
+                        tension: 0.1
+                    }]
+                }
+            });
+        }
+
+        function displayPlaybookStats(stats) {
+            const tbody = document.querySelector('#playbook-table tbody');
+            tbody.innerHTML = stats.top_playbooks.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.executions}</td>
+                    <td>${((p.executions / stats.total_executions) * 100).toFixed(1)}%</td>
+                </tr>
+            `).join('');
+        }
+
+        function displayRecentActivity(activities) {
+            const container = document.getElementById('recent-activity');
+            container.innerHTML = activities.slice(0, 10).map(a => `
+                <div class="mb-2">
+                    <small class="text-muted">${new Date(a.timestamp).toLocaleString()}</small><br>
+                    <strong>${a.action}</strong> on ${a.resource_type} #${a.resource_id || 'N/A'}
+                </div>
+            `).join('');
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+
+        // Refresh every 30 seconds
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>

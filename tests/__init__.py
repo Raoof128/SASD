@@ -1,0 +1,3 @@
+"""
+SOAR Platform Test Suite
+"""

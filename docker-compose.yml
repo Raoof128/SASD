@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: soar_postgres
+    environment:
+      POSTGRES_USER: soar_user
+      POSTGRES_PASSWORD: soar_password
+      POSTGRES_DB: soar_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - soar_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soar_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: soar_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - soar_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Flask Web Application
+  web:
+    build: .
+    container_name: soar_web
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://soar_user:soar_password@postgres:5432/soar_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=change-this-secret-key-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    networks:
+      - soar_network
+    restart: unless-stopped
+
+  # Celery Worker (for async playbook execution)
+  celery:
+    build: .
+    container_name: soar_celery
+    command: celery -A backend.orchestrator.celery worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://soar_user:soar_password@postgres:5432/soar_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+    networks:
+      - soar_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  soar_network:
+    driver: bridge
