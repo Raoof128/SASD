@@ -64,15 +64,18 @@ services:
   celery:
     build: .
     container_name: soar_celery
-    command: celery -A backend.orchestrator.celery worker --loglevel=info
+    command: celery -A backend.celery_app.celery_app worker --loglevel=info
     environment:
       - DATABASE_URL=postgresql://soar_user:soar_password@postgres:5432/soar_db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONPATH=/app
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/app
     networks:

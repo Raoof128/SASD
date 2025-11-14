@@ -7,7 +7,6 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from celery import Celery
 from flask import current_app
 
 from backend.models import (
@@ -18,8 +17,13 @@ from backend.decision_engine import DecisionEngine
 
 logger = logging.getLogger(__name__)
 
-# Initialize Celery
-celery = Celery('soar_tasks')
+# Import Celery app
+try:
+    from backend.celery_app import celery_app as celery
+except ImportError:
+    # Fallback for development
+    from celery import Celery
+    celery = Celery('soar_tasks')
 
 
 @celery.task(bind=True)
@@ -110,29 +114,33 @@ def get_playbook_instance(playbook_name: str):
     Returns:
         Playbook instance or None
     """
-    # Import all playbook classes
-    from backend.playbooks.phishing_response import PhishingResponsePlaybook
-    from backend.playbooks.malware_containment import MalwareContainmentPlaybook
-    from backend.playbooks.account_compromise import AccountCompromisePlaybook
-    from backend.playbooks.data_exfiltration import DataExfiltrationPlaybook
-    from backend.playbooks.brute_force_defense import BruteForceDefensePlaybook
-    from backend.playbooks.vulnerability_remediation import VulnerabilityRemediationPlaybook
-    from backend.playbooks.powershell_analysis import PowerShellAnalysisPlaybook
-    from backend.playbooks.dns_tunneling import DNSTunnelingPlaybook
+    try:
+        # Import all playbook classes
+        from backend.playbooks.phishing_response import PhishingResponsePlaybook
+        from backend.playbooks.malware_containment import MalwareContainmentPlaybook
+        from backend.playbooks.account_compromise import AccountCompromisePlaybook
+        from backend.playbooks.data_exfiltration import DataExfiltrationPlaybook
+        from backend.playbooks.brute_force_defense import BruteForceDefensePlaybook
+        from backend.playbooks.vulnerability_remediation import VulnerabilityRemediationPlaybook
+        from backend.playbooks.powershell_analysis import PowerShellAnalysisPlaybook
+        from backend.playbooks.dns_tunneling import DNSTunnelingPlaybook
 
-    playbook_map = {
-        'Phishing Investigation & Containment': PhishingResponsePlaybook,
-        'Malware Detection & Containment': MalwareContainmentPlaybook,
-        'Account Compromise Response': AccountCompromisePlaybook,
-        'Data Exfiltration Detection': DataExfiltrationPlaybook,
-        'Brute Force Defense': BruteForceDefensePlaybook,
-        'Vulnerability Confirmation & Remediation': VulnerabilityRemediationPlaybook,
-        'Suspicious PowerShell Execution': PowerShellAnalysisPlaybook,
-        'DNS Tunneling Detection': DNSTunnelingPlaybook
-    }
+        playbook_map = {
+            'Phishing Investigation & Containment': PhishingResponsePlaybook,
+            'Malware Detection & Containment': MalwareContainmentPlaybook,
+            'Account Compromise Response': AccountCompromisePlaybook,
+            'Data Exfiltration Detection': DataExfiltrationPlaybook,
+            'Brute Force Defense': BruteForceDefensePlaybook,
+            'Vulnerability Confirmation & Remediation': VulnerabilityRemediationPlaybook,
+            'Suspicious PowerShell Execution': PowerShellAnalysisPlaybook,
+            'DNS Tunneling Detection': DNSTunnelingPlaybook
+        }
 
-    playbook_class = playbook_map.get(playbook_name)
-    return playbook_class() if playbook_class else None
+        playbook_class = playbook_map.get(playbook_name)
+        return playbook_class() if playbook_class else None
+    except ImportError as e:
+        logger.error(f"Failed to import playbook {playbook_name}: {e}")
+        return None
 
 
 def enrich_incident_data(incident: Incident) -> Dict[str, Any]:
@@ -249,45 +257,52 @@ def trigger_auto_response(incident: Incident) -> Optional[PlaybookExecution]:
 
 def initialize_default_playbooks(app):
     """Initialize default playbooks in database"""
-    with app.app_context():
-        # Import all playbook classes
-        from backend.playbooks.phishing_response import PhishingResponsePlaybook
-        from backend.playbooks.malware_containment import MalwareContainmentPlaybook
-        from backend.playbooks.account_compromise import AccountCompromisePlaybook
-        from backend.playbooks.data_exfiltration import DataExfiltrationPlaybook
-        from backend.playbooks.brute_force_defense import BruteForceDefensePlaybook
-        from backend.playbooks.vulnerability_remediation import VulnerabilityRemediationPlaybook
-        from backend.playbooks.powershell_analysis import PowerShellAnalysisPlaybook
-        from backend.playbooks.dns_tunneling import DNSTunnelingPlaybook
+    try:
+        with app.app_context():
+            # Import all playbook classes
+            from backend.playbooks.phishing_response import PhishingResponsePlaybook
+            from backend.playbooks.malware_containment import MalwareContainmentPlaybook
+            from backend.playbooks.account_compromise import AccountCompromisePlaybook
+            from backend.playbooks.data_exfiltration import DataExfiltrationPlaybook
+            from backend.playbooks.brute_force_defense import BruteForceDefensePlaybook
+            from backend.playbooks.vulnerability_remediation import VulnerabilityRemediationPlaybook
+            from backend.playbooks.powershell_analysis import PowerShellAnalysisPlaybook
+            from backend.playbooks.dns_tunneling import DNSTunnelingPlaybook
 
-        playbook_classes = [
-            PhishingResponsePlaybook,
-            MalwareContainmentPlaybook,
-            AccountCompromisePlaybook,
-            DataExfiltrationPlaybook,
-            BruteForceDefensePlaybook,
-            VulnerabilityRemediationPlaybook,
-            PowerShellAnalysisPlaybook,
-            DNSTunnelingPlaybook
-        ]
+            playbook_classes = [
+                PhishingResponsePlaybook,
+                MalwareContainmentPlaybook,
+                AccountCompromisePlaybook,
+                DataExfiltrationPlaybook,
+                BruteForceDefensePlaybook,
+                VulnerabilityRemediationPlaybook,
+                PowerShellAnalysisPlaybook,
+                DNSTunnelingPlaybook
+            ]
 
-        for playbook_class in playbook_classes:
-            metadata = playbook_class.get_metadata()
+            for playbook_class in playbook_classes:
+                try:
+                    metadata = playbook_class.get_metadata()
 
-            # Check if playbook already exists
-            existing = Playbook.query.filter_by(name=metadata['name']).first()
+                    # Check if playbook already exists
+                    existing = Playbook.query.filter_by(name=metadata['name']).first()
 
-            if not existing:
-                playbook = Playbook(
-                    name=metadata['name'],
-                    description=metadata['description'],
-                    incident_type=','.join(metadata['incident_types']),
-                    automation_rate=metadata['automation_rate'],
-                    version=metadata['version'],
-                    requires_approval=metadata['requires_approval'],
-                    is_active=True
-                )
-                db.session.add(playbook)
+                    if not existing:
+                        playbook = Playbook(
+                            name=metadata['name'],
+                            description=metadata['description'],
+                            incident_type=','.join(metadata['incident_types']),
+                            automation_rate=metadata['automation_rate'],
+                            version=metadata['version'],
+                            requires_approval=metadata['requires_approval'],
+                            is_active=True
+                        )
+                        db.session.add(playbook)
+                except Exception as e:
+                    logger.error(f"Failed to initialize playbook {playbook_class.__name__}: {e}")
+                    continue
 
-        db.session.commit()
-        app.logger.info("Default playbooks initialized")
+            db.session.commit()
+            app.logger.info("Default playbooks initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize default playbooks: {e}")

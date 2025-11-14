@@ -11,6 +11,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from sqlalchemy import text
 
 from backend.config import get_config
 from backend.models import db
@@ -25,10 +26,6 @@ dictConfig({
     'formatters': {
         'default': {
             'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
-        },
-        'json': {
-            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
-            'format': '%(asctime)s %(name)s %(levelname)s %(message)s'
         }
     },
     'handlers': {
@@ -42,7 +39,7 @@ dictConfig({
             'filename': 'logs/soar_platform.log',
             'maxBytes': 10485760,  # 10MB
             'backupCount': 10,
-            'formatter': 'json'
+            'formatter': 'default'
         }
     },
     'root': {
@@ -117,7 +114,8 @@ def register_blueprints(app: Flask) -> None:
         """Health check endpoint"""
         try:
             # Check database connection
-            db.session.execute('SELECT 1')
+            db.session.execute(text('SELECT 1'))
+            db.session.commit()
             db_status = 'healthy'
         except Exception as e:
             app.logger.error(f"Database health check failed: {e}")
