@@ -1,0 +1,72 @@
+# Git attributes for consistent line endings and diff display
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.py text diff=python
+*.js text diff=javascript
+*.html text diff=html
+*.css text diff=css
+*.sql text
+
+# Configuration files
+*.yml text
+*.yaml text
+*.json text
+*.xml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Docker files
+Dockerfile text
+docker-compose*.yml text
+
+# Documentation
+*.md text
+*.txt text
+LICENSE text
+README text
+
+# Templates
+*.template text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+
+# Python
+*.pyc binary
+*.pyo binary
+*.pyd binary
+
+# Database
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# Archives
+*.7z binary
+*.jar binary
+*.rar binary
+
+# Linguistics detection
+*.py linguist-language=Python
+*.js linguist-language=JavaScript
+*.html linguist-language=HTML
+docs/** linguist-documentation
+tests/** linguist-vendored=false

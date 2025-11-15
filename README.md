@@ -2,8 +2,12 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0%2B-green.svg)](https://flask.palletsprojects.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Security](https://img.shields.io/badge/security-OWASP-blue.svg)](https://owasp.org/)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue.svg)](https://github.com/features/actions)
 
 ## Overview
 
@@ -185,23 +189,60 @@ See [docs/API_INTEGRATIONS.md](docs/API_INTEGRATIONS.md) for detailed integratio
 
 ## Documentation
 
-- [Architecture & Design](docs/ARCHITECTURE.md)
-- [API Integration Guide](docs/API_INTEGRATIONS.md)
-- [Playbook Catalog](docs/PLAYBOOK_CATALOG.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
+### 📚 Getting Started
+- [Quick Start Guide](QUICKSTART.md) - Get up and running in 5 minutes
+- [Installation Guide](docs/DEPLOYMENT.md) - Detailed installation instructions
+- [Configuration Guide](docs/DEPLOYMENT.md#configuration) - Environment variables and settings
+
+### 🏗️ Architecture
+- [Architecture Overview](docs/ARCHITECTURE.md) - System design and components
+- [Architecture Diagrams](docs/ARCHITECTURE_DIAGRAM.md) - Visual system diagrams
+- [Data Model](docs/ARCHITECTURE_DIAGRAM.md#data-model) - Database schema and relationships
+
+### 🔌 API & Integrations
+- [API Documentation](docs/API.md) - Complete REST API reference
+- [OpenAPI Specification](docs/openapi.yaml) - Machine-readable API spec
+- [API Integration Guide](docs/API_INTEGRATIONS.md) - External service integrations
+- [Example Scripts](examples/) - Practical usage examples
+
+### 📖 Playbooks
+- [Playbook Catalog](docs/PLAYBOOK_CATALOG.md) - Available security playbooks
+- [Custom Playbook Development](docs/PLAYBOOK_CATALOG.md#creating-custom-playbooks) - Build your own
+
+### 📊 Monitoring & Operations
+- [Monitoring Setup](monitoring/) - Prometheus and Grafana configuration
+- [Health Checks](docs/API.md#health--status) - System health monitoring
+- [Metrics Reference](monitoring/README.md#metrics) - Available metrics
+
+### 👥 Contributing
+- [Contributing Guidelines](CONTRIBUTING.md) - How to contribute
+- [Code of Conduct](CODE_OF_CONDUCT.md) - Community standards
+- [Security Policy](SECURITY.md) - Vulnerability reporting
+
+### 📋 Additional Resources
+- [Changelog](CHANGELOG.md) - Version history and updates
+- [Debugging Summary](DEBUGGING_SUMMARY.md) - Development improvements
 
 ## Testing
 
 ```bash
 # Run all tests
-pytest tests/ -v
+make test
 
-# Run with coverage
-pytest tests/ --cov=backend --cov-report=html
+# Run with coverage report
+make test-cov
 
 # Run specific test suite
 pytest tests/test_playbooks.py -v
+
+# Run linters and formatters
+make lint
+make format
 ```
+
+**Test Coverage**: Target 70%+ coverage for all code, 80%+ for security-critical functions.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#testing-guidelines) for detailed testing guidelines.
 
 ## Security Considerations
 
@@ -230,31 +271,152 @@ See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for production deployment guide.
 
 ## Contributing
 
-This is a portfolio project, but suggestions and improvements are welcome!
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes following our [coding standards](CONTRIBUTING.md#coding-standards)
+4. Run tests (`make test`) and linting (`make lint`)
+5. Commit your changes using [Conventional Commits](https://www.conventionalcommits.org/)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+### Development Setup
+
+```bash
+# Install dependencies
+make install
+
+# Initialize database
+make init
+
+# Run development server
+make dev
+
+# Run with Docker
+make docker-up
+```
 
 ## License
 
 MIT License - see LICENSE file for details
 
+## Features Roadmap
+
+### ✅ Implemented
+- [x] 8+ automated security playbooks
+- [x] 12+ API integrations
+- [x] Role-based access control (RBAC)
+- [x] Real-time metrics dashboard
+- [x] Comprehensive audit logging
+- [x] Docker containerization
+- [x] REST API with JWT authentication
+- [x] PostgreSQL database with ORM
+- [x] Redis caching layer
+- [x] Celery async task processing
+- [x] CI/CD with GitHub Actions
+- [x] Prometheus monitoring
+- [x] Grafana dashboards
+
+### 🚧 Planned Enhancements
+- [ ] Multi-factor authentication (MFA)
+- [ ] OAuth2/SAML integration
+- [ ] WebSocket for real-time updates
+- [ ] API rate limiting per user
+- [ ] Automated playbook testing
+- [ ] Machine learning for anomaly detection
+- [ ] Multi-tenancy support
+- [ ] Advanced threat intelligence correlation
+
+## Support
+
+### Getting Help
+- 📖 Check the [documentation](docs/)
+- 💬 Browse [GitHub Discussions](https://github.com/your-org/SASD/discussions)
+- 🐛 Report bugs via [GitHub Issues](https://github.com/your-org/SASD/issues)
+- 📧 Security issues: See [SECURITY.md](SECURITY.md)
+
+### Useful Commands
+
+```bash
+# Start the platform
+make docker-up          # Using Docker
+make run               # Local development
+
+# Database operations
+make init              # Initialize database
+make migrate           # Run migrations
+
+# Development
+make dev               # Run with auto-reload
+make shell             # Open Python shell
+
+# Code quality
+make format            # Format code with Black
+make lint              # Run linters
+make test              # Run tests
+make test-cov          # Run tests with coverage
+
+# Docker operations
+make docker-logs       # View logs
+make docker-down       # Stop containers
+make docker-clean      # Remove containers and volumes
+
+# View all commands
+make help
+```
+
 ## Author
 
-Portfolio project demonstrating enterprise SOAR platform development for SOC automation engineer roles.
+Portfolio project demonstrating enterprise SOAR platform development for security engineering and SOC automation roles.
+
+**Skills Demonstrated:**
+- Security orchestration and automation
+- RESTful API design and development
+- Incident response automation
+- Microservices architecture
+- DevOps and containerization
+- Full-stack security engineering
+- Python backend development
+- Database design and optimization
+- CI/CD pipeline implementation
+- Security best practices
 
 ## Acknowledgments
 
-Built to demonstrate expertise in:
-- Security orchestration and automation
-- API integration and development
-- Incident response automation
-- DevOps and containerization
-- Full-stack security engineering
+This project follows industry best practices and standards:
+- OWASP Top 10 security guidelines
+- NIST Cybersecurity Framework
+- MITRE ATT&CK framework
+- CIS Controls
+- Conventional Commits specification
+- Semantic Versioning
 
 ---
 
-**Note**: This is a demonstration platform. For production use, ensure proper security hardening, credential management, and compliance with your organization's security policies.
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Disclaimer
+
+**Note**: This is a demonstration platform built for educational and portfolio purposes. For production use:
+- Implement proper security hardening
+- Configure enterprise credential management (Vault, AWS Secrets Manager)
+- Conduct security audits and penetration testing
+- Ensure compliance with your organization's security policies
+- Review and update all API keys and credentials
+- Configure proper backup and disaster recovery
+- Implement monitoring and alerting
+
+---
+
+<div align="center">
+
+**[Documentation](docs/)** • **[Quick Start](QUICKSTART.md)** • **[API Docs](docs/API.md)** • **[Contributing](CONTRIBUTING.md)**
+
+</div>

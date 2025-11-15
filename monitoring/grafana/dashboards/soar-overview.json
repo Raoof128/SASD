@@ -1,0 +1,238 @@
+{
+  "dashboard": {
+    "title": "SOAR Platform Overview",
+    "tags": ["soar", "security", "incidents"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Total Incidents",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "soar_incidents_total",
+            "legendFormat": "Total Incidents"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "orientation": "auto"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Open Incidents",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "soar_incidents_open",
+            "legendFormat": "Open"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Automation Rate",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "soar_automation_rate",
+            "legendFormat": "Automation %"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        },
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 70, "color": "yellow"},
+                {"value": 85, "color": "green"}
+              ]
+            },
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Mean Time to Resolve (MTTR)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "soar_mttr_minutes",
+            "legendFormat": "MTTR"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        },
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "m"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Incidents by Severity",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "soar_incidents_by_severity",
+            "legendFormat": "{{ severity }}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 4
+        }
+      },
+      {
+        "id": 6,
+        "title": "Incidents by Status",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "soar_incidents_by_status",
+            "legendFormat": "{{ status }}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 4
+        }
+      },
+      {
+        "id": 7,
+        "title": "Incident Creation Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(soar_incidents_total[5m])",
+            "legendFormat": "Incidents/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 12
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Incidents/sec"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Playbook Execution Success Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(soar_playbook_executions_success_total[5m]) / rate(soar_playbook_executions_total[5m]) * 100",
+            "legendFormat": "Success Rate %"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 12
+        },
+        "yaxes": [
+          {
+            "format": "percent",
+            "label": "Success Rate",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "API Response Time (p95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        },
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Response Time"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "System Health",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "up",
+            "legendFormat": "{{ job }}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        }
+      }
+    ]
+  }
+}

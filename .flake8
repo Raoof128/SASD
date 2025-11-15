@@ -1,0 +1,67 @@
+[flake8]
+# Base flake8 configuration for SOAR Platform
+
+# Maximum line length
+max-line-length = 120
+
+# Exclude patterns
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    env,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    .tox,
+    migrations,
+    *.pyc,
+    .pytest_cache,
+    .mypy_cache,
+    node_modules
+
+# Error codes to ignore
+ignore =
+    # E203: whitespace before ':' (conflicts with Black)
+    E203,
+    # W503: line break before binary operator (conflicts with Black)
+    W503,
+    # E501: line too long (handled by Black)
+    E501,
+    # E402: module level import not at top of file
+    # E402,
+
+# Maximum complexity
+max-complexity = 10
+
+# Per-file ignores
+per-file-ignores =
+    # __init__.py files can have unused imports
+    __init__.py:F401,F403
+    # Test files can have unused imports and long lines
+    tests/*.py:E501,F401
+
+# Select error codes
+select =
+    # Pyflakes errors
+    F,
+    # Pycodestyle errors
+    E,
+    # Pycodestyle warnings
+    W,
+    # McCabe complexity
+    C
+
+# Show source code for errors
+show-source = True
+
+# Show error codes
+show-pep8 = True
+
+# Count errors
+count = True
+
+# Statistics
+statistics = True

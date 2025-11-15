@@ -1,0 +1,151 @@
+# Prometheus alerting rules for SOAR Platform
+
+groups:
+  - name: soar_platform_alerts
+    interval: 30s
+    rules:
+      # High number of open incidents
+      - alert: HighOpenIncidents
+        expr: soar_incidents_open > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of open incidents"
+          description: "There are {{ $value }} open incidents in the system"
+
+      # Critical incidents not being processed
+      - alert: CriticalIncidentsStalled
+        expr: soar_incidents_critical_open > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical incidents not being processed"
+          description: "{{ $value }} critical incidents are open and need attention"
+
+      # Low automation rate
+      - alert: LowAutomationRate
+        expr: soar_automation_rate < 70
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Automation rate below threshold"
+          description: "Automation rate is {{ $value }}%, below 70% threshold"
+
+      # High MTTR
+      - alert: HighMeanTimeToResolve
+        expr: soar_mttr_minutes > 10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mean time to resolve is high"
+          description: "MTTR is {{ $value }} minutes, above 10 minute threshold"
+
+      # Playbook execution failures
+      - alert: PlaybookExecutionFailures
+        expr: rate(soar_playbook_executions_failed_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High playbook execution failure rate"
+          description: "Playbook execution failure rate is {{ $value }}/s"
+
+  - name: infrastructure_alerts
+    interval: 30s
+    rules:
+      # API endpoint down
+      - alert: APIEndpointDown
+        expr: up{job="soar-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOAR API endpoint is down"
+          description: "The SOAR API has been down for more than 1 minute"
+
+      # Database connection issues
+      - alert: DatabaseDown
+        expr: up{job="postgresql"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "Database connection has been unavailable for more than 1 minute"
+
+      # Redis cache unavailable
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis cache is unavailable"
+          description: "Redis has been down for more than 2 minutes"
+
+      # Celery workers not responding
+      - alert: CeleryWorkersDown
+        expr: up{job="celery"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Celery workers are not responding"
+          description: "No Celery workers have been active for more than 2 minutes"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: rate(node_cpu_seconds_total{mode="system"}[1m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 90% for more than 5 minutes"
+
+      # Disk space running low
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Less than 10% disk space available on root partition"
+
+  - name: performance_alerts
+    interval: 30s
+    rules:
+      # High API response time
+      - alert: HighAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }}s, above 2s threshold"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP error rate"
+          description: "Error rate is {{ $value }}, above 5% threshold"

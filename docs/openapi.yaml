@@ -1,0 +1,593 @@
+openapi: 3.0.3
+info:
+  title: SOAR Platform API
+  description: |
+    Enterprise Security Orchestration, Automation, and Response (SOAR) Platform API.
+
+    This API provides endpoints for managing security incidents, executing automated playbooks,
+    and integrating with external security tools.
+  version: 1.0.0
+  contact:
+    name: SOAR Platform Team
+    email: security@soar-platform.local
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development server
+  - url: https://soar.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Incidents
+    description: Security incident management
+  - name: Playbooks
+    description: Automated security playbooks
+  - name: Dashboard
+    description: Metrics and statistics
+  - name: Integrations
+    description: External API integrations
+  - name: Health
+    description: System health checks
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                  example: changeme
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT authentication token
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /incidents:
+    get:
+      tags:
+        - Incidents
+      summary: List incidents
+      description: Retrieve a list of security incidents with optional filtering
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, investigating, contained, resolved, closed]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort
+          in: query
+          schema:
+            type: string
+            example: -created_at
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incidents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Incident'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+
+    post:
+      tags:
+        - Incidents
+      summary: Create incident
+      description: Create a new security incident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentCreate'
+      responses:
+        '201':
+          description: Incident created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /incidents/{id}:
+    get:
+      tags:
+        - Incidents
+      summary: Get incident
+      description: Retrieve a specific incident by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '404':
+          description: Incident not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Incidents
+      summary: Update incident
+      description: Update an existing incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentUpdate'
+      responses:
+        '200':
+          description: Incident updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+
+    delete:
+      tags:
+        - Incidents
+      summary: Delete incident
+      description: Delete an incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Incident deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Incident deleted successfully
+
+  /playbooks:
+    get:
+      tags:
+        - Playbooks
+      summary: List playbooks
+      description: Retrieve all available security playbooks
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playbooks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Playbook'
+
+  /playbooks/{id}/execute:
+    post:
+      tags:
+        - Playbooks
+      summary: Execute playbook
+      description: Execute a playbook for a specific incident
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - incident_id
+              properties:
+                incident_id:
+                  type: integer
+                  description: ID of the incident to process
+                parameters:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Playbook execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaybookExecution'
+
+  /playbooks/executions/{execution_id}:
+    get:
+      tags:
+        - Playbooks
+      summary: Get execution status
+      description: Get the status of a playbook execution
+      parameters:
+        - name: execution_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Execution status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaybookExecution'
+
+  /dashboard/stats:
+    get:
+      tags:
+        - Dashboard
+      summary: Get statistics
+      description: Retrieve dashboard statistics
+      responses:
+        '200':
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStats'
+
+  /dashboard/metrics:
+    get:
+      tags:
+        - Dashboard
+      summary: Get metrics
+      description: Retrieve platform metrics for specified timeframe
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+      responses:
+        '200':
+          description: Platform metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metrics'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check system health status
+      security: []
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, analyst, operator, viewer]
+
+    Incident:
+      type: object
+      properties:
+        id:
+          type: integer
+        alert_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, investigating, contained, resolved, closed]
+        incident_type:
+          type: string
+        source_ip:
+          type: string
+        source_email:
+          type: string
+        affected_systems:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    IncidentCreate:
+      type: object
+      required:
+        - title
+        - severity
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 255
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        incident_type:
+          type: string
+        source_ip:
+          type: string
+        source_email:
+          type: string
+          format: email
+        affected_systems:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    IncidentUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, investigating, contained, resolved, closed]
+        notes:
+          type: string
+
+    Playbook:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        trigger_conditions:
+          type: object
+        automation_rate:
+          type: number
+          format: float
+        avg_execution_time:
+          type: integer
+
+    PlaybookExecution:
+      type: object
+      properties:
+        id:
+          type: integer
+        playbook_id:
+          type: integer
+        incident_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        result:
+          type: object
+          additionalProperties: true
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        execution_time:
+          type: integer
+          description: Execution time in seconds
+
+    DashboardStats:
+      type: object
+      properties:
+        total_incidents:
+          type: integer
+        open_incidents:
+          type: integer
+        resolved_incidents:
+          type: integer
+        critical_incidents:
+          type: integer
+        high_priority_incidents:
+          type: integer
+        total_executions:
+          type: integer
+        successful_executions:
+          type: integer
+        failed_executions:
+          type: integer
+        automation_rate:
+          type: number
+          format: float
+        mttr:
+          type: number
+          format: float
+          description: Mean time to resolve in minutes
+
+    Metrics:
+      type: object
+      properties:
+        timeframe:
+          type: string
+        incident_trends:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              count:
+                type: integer
+        severity_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+        top_incident_types:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              count:
+                type: integer
+
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          properties:
+            database:
+              type: string
+            redis:
+              type: string
+            celery:
+              type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
